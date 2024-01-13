@@ -1,0 +1,32 @@
+pkgname=dinit-rc
+pkgver=0.2.3.r0.7197dc6
+pkgrel=1
+pkgdesc="A monitor of resources"
+arch=(any)
+url="https://gitea.artixlinux.org/artix/dinit-rc.git"
+makedepends=('gcc' 'make' 'git')
+source=("${pkgname}::git+https://gitea.artixlinux.org/artix/dinit-rc.git")
+sha512sums=('SKIP')
+provides=('dinit-rc')
+options=(!strip)
+
+pkgver() {
+    cd "${pkgname}"
+    git describe --long --tags | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g'
+}
+
+build() {
+    cd "${srcdir}/${pkgname}"
+    rg --no-ignore -l '/usr/bin/udev[dadm]' | xargs sed -i -e 's/\/usr\/bin\/udevd/\/opt\/dinit\/bin\/udevd/g' -e 's/\/usr\/bin\/udevadm/\/opt\/dinit\/bin\/udevadm/g'
+    rg --no-ignore -l '/usr/bin/etmpfiles' | xargs sed -i 's/\/usr\/bin\/etmpfiles/\/opt\/dinit\/bin\/etmpfiles/g'
+
+    make
+}
+
+package() {
+    cd "${srcdir}/${pkgname}"
+    DESTDIR="${pkgdir}" make PREFIX=/usr install
+    rm ${pkgdir}/usr/lib/sysctl.d/50-default.conf
+}
+
+# vim:set sw=2 sts=2 et:
